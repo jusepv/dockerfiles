@@ -1,0 +1,29 @@
+name: infra
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis-server
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - network
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  network:
+    driver: bridge

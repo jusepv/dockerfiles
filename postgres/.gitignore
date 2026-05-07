@@ -1,0 +1,21 @@
+# 데이터 디렉토리 (PostgreSQL 데이터 파일들이 저장됨)
+data/
+
+# 로그 파일
+*.log
+
+# 임시 파일
+*.tmp
+*.swp
+*.swo
+
+# IDE 설정
+.vscode/
+.idea/
+
+# OS 생성 파일
+.DS_Store
+Thumbs.db
+
+# Docker 관련
+.env.local

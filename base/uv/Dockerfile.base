@@ -1,0 +1,40 @@
+FROM python:3.13-slim
+
+# 메타데이터 추가
+LABEL maintainer="kangsik.shin@hanwha.com"
+LABEL description="Python 3.13 base image with uv for FastAPI applications"
+LABEL version="1.0"
+
+# 환경 변수 설정
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    UV_VERSION=0.5.11 \
+    UV_NO_CACHE=1
+
+# 시스템 의존성 설치
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# uv 설치
+RUN pip install uv==$UV_VERSION
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 기본 사용자 생성 (보안 강화)
+RUN useradd --create-home --shell /bin/bash app \
+    && chown -R app:app /app
+
+# 포트 노출 (기본값)
+EXPOSE 8000
+
+# 기본 실행 사용자 설정
+USER app
+
+# 기본 명령어 (덮어쓰기 가능)
+CMD ["python", "--version"]

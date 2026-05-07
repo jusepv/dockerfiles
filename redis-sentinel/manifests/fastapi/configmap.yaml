@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oasis-rag-service-config
+  namespace: haiqv
+data:
+  # ### LOGGING CONFIGURATION ###
+  LOG_LEVEL: "INFO"
+
+  # ### APPLICATION CONFIGURATION ###
+  APP_NAME: "oasis-rag-service"
+
+  # ### DATABASE CONFIGURATION ###
+  DB_HOST: "postgresql-cluster-ha.database"
+  DB_PORT: "5432"
+  DB_NAME: "oasis"
+  DB_USER: "postgres"
+  DB_PASSWORD: "postgresql_1123"
+  DB_POOL_SIZE: "10"
+  DB_MAX_OVERFLOW: "20"
+  DB_POOL_TIMEOUT: "30"
+  DB_POOL_RECYCLE: "3600"
+  DB_SCHEMA: "public"
+
+  # ### REDIS CONFIGURATION ###
+  FLAG: "PRODUCTION"
+  REDIS_HOST: "redis.database:6379"
+  REDIS_PORT: "6379"
+  REDIS_SENTINELS: "redis-node-0.redis-headless.database:26379,redis-node-1.redis-headless.database:26379,redis-node-2.redis-headless.database:26379"
+  MASTER_NAME: "mymaster"
+
+  APP_DB: "2"
+  BROKER_DB: "3"
+  BACKEND_DB: "4"
+
+  SENTINEL_PASSWORD: "Hsnc123!"
+  REDIS_PASSWORD: "Hsnc123!"
+
+  SOCKET_TIMEOUT: "5"
+  VISIBILITY_TIMEOUT: "300"
+
+  SYNAP_URL: "docuanalyzer-service.docuanalyzer"
+  SYNAP_API_KEY: "SNOCR-0fa44dcd000d4ddba3d998a0f6f9d960"

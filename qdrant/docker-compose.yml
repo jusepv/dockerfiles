@@ -1,0 +1,50 @@
+name: infra
+version: "3.8"
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-db
+    restart: unless-stopped
+    environment:
+      # Qdrant 설정
+      QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__SERVICE__HTTP_PORT: 6333
+      # 로그 레벨 (debug, info, warn, error)
+      QDRANT__LOG_LEVEL: INFO
+      # 스토리지 설정
+      QDRANT__STORAGE__STORAGE_PATH: /qdrant/storage
+      QDRANT__STORAGE__SNAPSHOTS_PATH: /qdrant/snapshots
+      # 성능 최적화 (옵션)
+      # QDRANT__STORAGE__PERFORMANCE__MAX_SEARCH_THREADS: 4
+      TZ: Asia/Seoul
+    ports:
+      # HTTP API (웹 UI 포함)
+      - "6333:6333"
+      # gRPC API
+      - "6334:6334"
+    volumes:
+      # 데이터 영구 저장
+      - ./storage:/qdrant/storage
+      # 스냅샷 저장 (백업용)
+      - ./snapshots:/qdrant/snapshots
+      # 커스텀 설정 파일 (옵션)
+      # - ./config/production.yaml:/qdrant/config/production.yaml
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:6333/readyz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  network:
+    driver: bridge
+
+volumes:
+  qdrant-storage:
+  qdrant-snapshots:
+
+

@@ -1,0 +1,55 @@
+name: infra
+version: "3.8"
+
+networks:
+  network:
+    driver: bridge
+
+volumes:
+  memgraph_data:
+    driver: local
+  memgraph_log:
+    driver: local
+
+services:
+  memgraph:
+    image: memgraph/memgraph-mage
+    container_name: memgraph-db
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Seoul
+    ports:
+      - "7687:7687"   # Bolt 프로토콜 (클라이언트 연결)
+      - "7444:7444"   # 웹소켓/HTTP
+    volumes:
+      # 데이터 볼륨 (영구 저장)
+      - memgraph_data:/var/lib/memgraph
+      # 로그 볼륨
+      - memgraph_log:/var/log/memgraph
+    networks:
+      - network
+    command: >
+      --log-level=WARNING
+      --memory-limit=1024
+    healthcheck:
+      test: ["CMD-SHELL", "echo '' | nc -q 1 localhost 7687 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Memgraph Lab (웹 UI 관리 도구)
+  memgraph-lab:
+    image: memgraph/lab
+    container_name: memgraph-lab
+    restart: unless-stopped
+    environment:
+      QUICK_CONNECT_MG_HOST: memgraph
+      QUICK_CONNECT_MG_PORT: 7687
+      TZ: Asia/Seoul
+    ports:
+      - "7688:3000"
+    networks:
+      - network
+    depends_on:
+      - memgraph

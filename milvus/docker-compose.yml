@@ -1,0 +1,100 @@
+name: infra
+version: "3.9"
+
+networks:
+  network:
+    name: network
+    driver: bridge
+
+volumes:
+  milvus-etcd-data:
+    driver: local
+  milvus-minio-data:
+    driver: local
+  milvus-data:
+    driver: local
+
+services:
+  # === Milvus Infrastructure ===
+  milvus-etcd:
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.5
+    restart: always
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - ./data/etcd:/etcd # etcd 데이터 영구 저장
+    command: >
+      etcd
+        --advertise-client-urls=http://milvus-etcd:2379
+        --listen-client-urls=http://0.0.0.0:2379
+        --data-dir /etcd
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  milvus-minio:
+    container_name: milvus-minio
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    restart: always
+    environment:
+      MINIO_ACCESS_KEY: admin
+      MINIO_SECRET_KEY: admin1234!
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data/minio:/minio_data # MinIO 데이터 영구 저장
+    command: minio server /minio_data --console-address ":9001"
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  milvus-standalone:
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.4.6
+    restart: always
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_ENDPOINTS: milvus-etcd:2379
+      MINIO_ADDRESS: milvus-minio:9000
+      MINIO_ACCESS_KEY: admin
+      MINIO_SECRET_KEY: admin1234!
+    volumes:
+      - ./data/milvus:/var/lib/milvus # Milvus 데이터 영구 저장
+    ports:
+      - "19530:19530"
+    depends_on:
+      - milvus-etcd
+      - milvus-minio
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  attu:
+    image: zilliz/attu:v2.3.4
+    container_name: attu
+    restart: always
+    environment:
+      MILVUS_URL: milvus-standalone:19530
+    depends_on:
+      - milvus-standalone
+    ports:
+      - "33000:3000"
+    networks:
+      - network

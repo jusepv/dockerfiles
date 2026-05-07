@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oasis-celery-worker
+  namespace: haiqv
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: oasis-celery-worker
+  template:
+    metadata:
+      labels:
+        app: oasis-celery-worker
+    spec:
+      containers:
+        - name: celery-worker
+          image: registry.haiqv.ai/oasis/oasis-rag-service:0.1.0_250917_2
+          envFrom:
+            - configMapRef:
+                name: oasis-rag-service-config
+          command: ["poetry", "run", "celery", "-A", "src.worker.app:app", "worker", "-l", "info"]
+          volumeMounts:
+            - name: worker-volume
+              mountPath: /app/data
+            - name: worker-logs
+              mountPath: /logs
+      volumes:
+        - name: worker-volume
+          persistentVolumeClaim:
+            claimName: oasis-volume
+        - name: worker-logs
+          persistentVolumeClaim:
+            claimName: oasis-log

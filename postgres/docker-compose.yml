@@ -1,0 +1,58 @@
+name: infra
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin1234!
+      TZ: Asia/Seoul
+    ports:
+      - "5432:5432"
+    volumes:
+      # 데이터 볼륨 (영구 저장)
+      - ./data:/var/lib/postgresql/data
+      # 백업 폴더
+      - ./backups:/backups
+      # 초기화 스크립트 (옵션)
+      - ./init-scripts:/docker-entrypoint-initdb.d
+      # 설정 파일 (옵션)
+      # - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
+      # - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL 관리 도구 (옵션)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin1234!
+    ports:
+      - "48080:80"
+    volumes:
+      - ./pgadmin-data:/var/lib/pgadmin
+    networks:
+      - network
+    depends_on:
+      - postgres
+
+networks:
+  network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  pgadmin-data:

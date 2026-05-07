@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oasis-rag-service
+  namespace: haiqv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oasis-rag-service
+  template:
+    metadata:
+      labels:
+        app: oasis-rag-service
+    spec:
+      containers:
+        - name: oasis-rag-service
+          image: registry.haiqv.ai/oasis/oasis-rag-service:0.1.0_250917_2
+          envFrom:
+            - configMapRef:
+                name: oasis-rag-service-config
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: fastapi-volume
+              mountPath: /app/data
+            - name: fastapi-logs
+              mountPath: /logs
+      volumes:
+        - name: fastapi-volume
+          persistentVolumeClaim:
+            claimName: oasis-volume
+        - name: fastapi-logs
+          persistentVolumeClaim:
+            claimName: oasis-log

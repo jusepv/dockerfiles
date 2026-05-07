@@ -1,0 +1,45 @@
+name: infra
+version: "3.8"
+
+networks:
+  network:
+    driver: bridge
+
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j-db
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/admin1234!
+      NEO4J_dbms_memory_heap_initial__size: 512m
+      NEO4J_dbms_memory_heap_max__size: 2G
+      NEO4j_dbms_memory_pagecache_size: 1G
+      NEO4J_dbms_connector_bolt_enabled: true
+      NEO4J_dbms_connector_http_enabled: true
+      NEO4J_dbms_connector_https_enabled: false
+      NEO4J_dbms_directories_import: /var/lib/neo4j/import
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*,algo.*
+      NEO4J_dbms_security_procedures_allowlist: apoc.*,algo.*
+      TZ: Asia/Seoul
+    ports:
+      - "7474:7474"  # HTTP interface
+      - "7687:7687"  # Bolt protocol
+    volumes:
+      # 데이터 볼륨 (Docker 볼륨 사용)
+      - neo4j_data:/data
+      # 백업 폴더
+      - ./backups:/backups
+      # 플러그인 폴더
+      - ./plugins:/plugins
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "admin1234!", "RETURN 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  neo4j_data:

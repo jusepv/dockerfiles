@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oasis-celery-flower
+  namespace: haiqv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oasis-celery-flower
+  template:
+    metadata:
+      labels:
+        app: oasis-celery-flower
+    spec:
+      containers:
+        - name: celery-flower
+          image: registry.haiqv.ai/oasis/oasis-rag-service:0.1.0_250917_2
+          envFrom:
+            - configMapRef:
+                name: oasis-rag-service-config
+          command: ["poetry", "run", "celery", "-A", "src.worker.app:app", "flower", "--port=5555", "--url-prefix=/flower"]
+          ports:
+            - containerPort: 5555

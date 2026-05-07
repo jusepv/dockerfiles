@@ -1,0 +1,46 @@
+name: infra
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7.2
+    container_name: redis
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    volumes:
+      - ./redis/redis.conf:/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    restart: always
+    networks: [network]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  sentinel:
+    image: redis:7.2
+    container_name: redis-sentinel
+    command: ["redis-sentinel", "/etc/redis/sentinel.conf"]
+    volumes:
+      - ./redis/sentinel.conf:/etc/redis/sentinel.conf
+    ports:
+      - "26379:26379"
+    restart: always
+    networks: [network]
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26379", "-a", "admin1234!", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  network:
+    driver: bridge
